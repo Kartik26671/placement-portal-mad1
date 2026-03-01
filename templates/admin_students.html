@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin - All Students</title>
+</head>
+<body>
+
+<h2>All Registered Students</h2>
+
+{% if students %}
+
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Status</th>
+        <th>Action</th>
+    </tr>
+
+    {% for s in students %}
+    <tr>
+        <td>{{ s["id"] }}</td>
+        <td>{{ s["name"] }}</td>
+        <td>{{ s["email"] }}</td>
+
+        <!-- If you don’t yet have active column,
+             temporarily show Active -->
+        <td>
+            {% if s["is_active"] == 1 %}
+                Active
+            {% else %}
+                Deactivated
+            {% endif %}
+        </td>
+
+        <td>
+            {% if s["is_active"] == 1 %}
+                <a href="/admin_toggle_student/{{ s['id'] }}">Deactivate</a>
+            {% else %}
+                <a href="/admin_toggle_student/{{ s['id'] }}">Activate</a>
+            {% endif %}
+        </td>
+
+    </tr>
+    {% endfor %}
+
+</table>
+
+{% else %}
+<p>No students found.</p>
+{% endif %}
+
+<br>
+<a href="/admin_dashboard">Back to Dashboard</a>
+
+</body>
+</html>

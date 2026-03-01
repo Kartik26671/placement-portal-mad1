@@ -105,31 +105,42 @@ def register():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    if request.method == "POST":
-        email = request.form["email"]
-        password = request.form["password"]
+   if request.method == "POST":
+      email = request.form["email"]
+      password = request.form["password"]
 
-        conn = get_db_connection()
-        user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
-        conn.close()
+      conn = get_db_connection()
+      user = conn.execute(
+         "SELECT * FROM users WHERE email = ?",
+         (email,)
+      ).fetchone()
+      conn.close()
 
-        if user and check_password_hash(user["password"], password):
-            session["user_id"] = user["id"]
-            session["role"] = user["role"]
+      # User does not exist
+      if not user:
+         return "Invalid credentials"
 
-            if user["role"] == "admin":
-                return redirect("/admin_dashboard")
-            elif user["role"] == "company":
-                return redirect("/company_dashboard")
-            else:
-                return redirect("/student_dashboard")
+      # Wrong password
+      if not check_password_hash(user["password"], password):
+         return "Invalid credentials"
 
-        return "Invalid Credentials"
+      # Deactivated account
+      if user["is_active"] == 0:
+         return "Account is deactivated by admin"
 
-    return render_template("login.html")
+      # Login successful
+      session["user_id"] = user["id"]
+      session["role"] = user["role"]
 
+      if user["role"] == "admin":
+         return redirect("/admin_dashboard")
+      elif user["role"] == "company":
+         return redirect("/company_dashboard")
+      else:
+         return redirect("/student_dashboard")
 
-from werkzeug.security import generate_password_hash
+   return render_template("login.html")
+
 
 
 @app.route("/admin_dashboard")
@@ -191,6 +202,50 @@ def admin_dashboard():
       total_drives=total_drives,
       total_applications=total_applications
    )
+
+
+
+
+
+@app.route("/admin_view_students")
+def admin_view_students():
+    if "user_id" not in session or session.get("role") != "admin":
+        return redirect("/login")
+
+    conn = get_db_connection()
+    students = conn.execute(
+        "SELECT * FROM users WHERE role='student'"
+    ).fetchall()
+    conn.close()
+
+    return render_template("admin_students.html", students=students)
+
+
+
+
+@app.route("/admin_toggle_student/<int:student_id>")
+def admin_toggle_student(student_id):
+    if "user_id" not in session or session.get("role") != "admin":
+        return redirect("/login")
+
+    conn = get_db_connection()
+
+    student = conn.execute(
+        "SELECT is_active FROM users WHERE id=? AND role='student'",
+        (student_id,)
+    ).fetchone()
+
+    if student:
+        new_status = 0 if student["is_active"] == 1 else 1
+
+        conn.execute(
+            "UPDATE users SET is_active=? WHERE id=?",
+            (new_status, student_id)
+        )
+        conn.commit()
+
+    conn.close()
+    return redirect("/admin_view_students")
 
 
 
@@ -427,13 +482,21 @@ def update_status(app_id, status):
 @app.route("/student_dashboard")
 def student_dashboard():
 
-   if "user_id" not in session:
+   if "user_id" not in session or session.get("role") != "student":
       return redirect("/login")
 
-   if session.get("role") != "student":
-      return "Unauthorized Access"
-
    conn = get_db_connection()
+
+   # Checking if student is still active
+   user = conn.execute(
+      "SELECT is_active FROM users WHERE id=?",
+      (session["user_id"],)
+   ).fetchone()
+
+   if not user or user["is_active"] == 0:
+      conn.close()
+      session.clear()
+      return "Account has been deactivated"
 
    approved_drives = conn.execute("""
       SELECT drives.id, drives.title, drives.description, drives.eligibility, drives.deadline, users.name
