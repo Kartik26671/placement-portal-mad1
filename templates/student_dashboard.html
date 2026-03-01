@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Dashboard</title>
+</head>
+<body>
+
+<h2>Available Drives</h2>
+
+{% if approved_drives %}
+<table border="1">
+    <tr>
+        <th>Job Title</th>
+        <th>Company</th>
+        <th>Eligibility</th>
+        <th>Deadline</th>
+        <th>Action</th>
+    </tr>
+
+    {% for drive in approved_drives %}
+    <tr>
+        <td>{{ drive["title"] }}</td>
+        <td>{{ drive["name"] }}</td>
+        <td>{{ drive["eligibility"] }}</td>
+        <td>{{ drive["deadline"] }}</td>
+        <td>
+            <a href="/apply_drive/{{ drive['id'] }}">Apply</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p>No drives available.</p>
+{% endif %}
+
+<h2>Your Applications</h2>
+
+{% if applications %}
+<table border="1">
+    <tr>
+        <th>Drive</th>
+        <th>Status</th>
+    </tr>
+
+    {% for app in applications %}
+    <tr>
+        <td>{{ app["title"] }}</td>
+        <td>{{ app["status"] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p>You have not applied to any drives yet.</p>
+{% endif %}
+
+</body>
+</html>

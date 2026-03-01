@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard</title>
+</head>
+<body>
+
+<h2>Admin Dashboard</h2>
+<h2>System Statistics</h2>
+
+<ul>
+    <li>Total Students: {{ total_students }}</li>
+    <li>Total Companies: {{ total_companies }}</li>
+    <li>Total Drives: {{ total_drives }}</li>
+    <li>Total Applications: {{ total_applications }}</li>
+</ul>
+
+<h3>Pending Companies</h3>
+
+{% if pending_companies %}
+    <table border="1">
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Action</th>
+        </tr>
+
+        {% for company in pending_companies %}
+        <tr>
+            <td>{{ company["name"] }}</td>
+            <td>{{ company["email"] }}</td>
+            <td>
+                <a href="/approve_company/{{ company['id'] }}">Approve</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+{% else %}
+    <p>No pending companies.</p>
+{% endif %}
+
+
+
+
+<h3>Pending Drives</h3>
+
+{% if pending_drives %}
+<table border="1">
+    <tr>
+        <th>Job Title</th>
+        <th>Company</th>
+        <th>Action</th>
+    </tr>
+
+    {% for drive in pending_drives %}
+    <tr>
+        <td>{{ drive["title"] }}</td>
+        <td>{{ drive["name"] }}</td>
+        <td>
+            <a href="/approve_drive/{{ drive['id'] }}">Approve</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p>No pending drives.</p>
+{% endif %}
+
+</body>
+</html>

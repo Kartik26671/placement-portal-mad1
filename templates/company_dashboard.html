@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Company Dashboard</title>
+</head>
+<body>
+
+<h2>Company Dashboard</h2>
+
+<h3>Company Name: {{ company["name"] }}</h3>
+<p>Status: {{ company["approval_status"] }}</p>
+
+<a href="/create_drive">Create New Drive</a>
+<br><br>
+
+<h3>Your Drives</h3>
+
+{% if drives %}
+<table border="1">
+   <tr>
+      <th>Job Title</th>
+      <th>Status</th>
+      <th>Applicants</th>
+      <th>Action</th>
+   </tr>
+
+   {% for drive in drives %}
+   <tr>
+   <td>{{ drive["title"] }}</td>
+   <td>{{ drive["status"] }}</td>
+   <td>{{ drive["applicant_count"] }}</td>
+   <td>
+      {% if drive["status"] != "closed" %}
+            <a href="/close_drive/{{ drive['id'] }}">Close</a>
+      {% else %}
+            Closed
+      {% endif %}
+   </td>
+   </tr>
+   {% endfor %}
+</table>
+{% else %}
+<p>No drives created yet.</p>
+{% endif %}
+
+<br>
+<a href="/view_applicants">View Applicants</a>
+
+</body>
+</html>

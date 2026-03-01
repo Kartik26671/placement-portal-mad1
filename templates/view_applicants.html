@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Applicants</title>
+</head>
+<body>
+
+<h2>Applicants</h2>
+
+{% if applicants %}
+<table border="1">
+    <tr>
+        <th>Student Name</th>
+        <th>Drive</th>
+        <th>Status</th>
+        <th>Update</th>
+    </tr>
+
+    {% for app in applicants %}
+    <tr>
+        <td>{{ app["name"] }}</td>
+        <td>{{ app["title"] }}</td>
+        <td>{{ app["status"] }}</td>
+        <td>
+            <a href="/update_status/{{ app['id'] }}/Shortlisted">Shortlist</a>
+            |
+            <a href="/update_status/{{ app['id'] }}/Selected">Select</a>
+            |
+            <a href="/update_status/{{ app['id'] }}/Rejected">Reject</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p>No applicants yet.</p>
+{% endif %}
+
+</body>
+</html>
