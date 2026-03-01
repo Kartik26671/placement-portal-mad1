@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin - All Companies</title>
+</head>
+<body>
+
+<h2>All Registered Companies</h2>
+
+{% if companies %}
+
+<table border="1">
+<tr>
+    <th>ID</th>
+    <th>Name</th>
+    <th>Email</th>
+    <th>Status</th>
+    <th>Action</th>
+</tr>
+
+{% for c in companies %}
+<tr>
+    <td>{{ c["id"] }}</td>
+    <td>{{ c["name"] }}</td>
+    <td>{{ c["email"] }}</td>
+
+    <td>
+        {% if c["is_active"] == 1 %}
+            Active
+        {% else %}
+            Deactivated
+        {% endif %}
+    </td>
+
+    <td>
+        {% if c["is_active"] == 1 %}
+            <a href="/admin_toggle_company/{{ c['id'] }}">Deactivate</a>
+        {% else %}
+            <a href="/admin_toggle_company/{{ c['id'] }}">Activate</a>
+        {% endif %}
+    </td>
+
+</tr>
+{% endfor %}
+</table>
+
+{% else %}
+<p>No companies found.</p>
+{% endif %}
+
+<br>
+<a href="/admin_dashboard">Back</a>
+
+</body>
+</html>

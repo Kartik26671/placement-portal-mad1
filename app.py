@@ -250,6 +250,51 @@ def admin_toggle_student(student_id):
 
 
 
+@app.route("/admin_toggle_company/<int:company_id>")
+def admin_toggle_company(company_id):
+    if "user_id" not in session or session.get("role") != "admin":
+        return redirect("/login")
+
+    conn = get_db_connection()
+
+    company = conn.execute(
+        "SELECT is_active FROM users WHERE id=? AND role='company'",
+        (company_id,)
+    ).fetchone()
+
+    if company:
+        new_status = 0 if company["is_active"] == 1 else 1
+
+        conn.execute(
+            "UPDATE users SET is_active=? WHERE id=?",
+            (new_status, company_id)
+        )
+        conn.commit()
+
+    conn.close()
+    return redirect("/admin_view_companies")
+
+
+
+
+
+
+@app.route("/admin_view_companies")
+def admin_view_companies():
+   if "user_id" not in session or session.get("role") != "admin":
+      return redirect("/login")
+
+   conn = get_db_connection()
+   companies = conn.execute(
+      "SELECT * FROM users WHERE role='company'"
+   ).fetchall()
+   conn.close()
+
+   return render_template("admin_companies.html", companies=companies)
+
+
+
+
 
 @app.route("/approve_company/<int:user_id>")
 def approve_company(user_id):
