@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>All Applications</title>
+</head>
+<body>
+
+<h2>All Student Applications</h2>
+
+{% if applications %}
+<table border="1">
+<tr>
+    <th>Student</th>
+    <th>Company</th>
+    <th>Drive</th>
+    <th>Status</th>
+    <th>Applied On</th>
+</tr>
+
+{% for app in applications %}
+<tr>
+    <td>{{ app["student_name"] }}</td>
+    <td>{{ app["company_name"] }}</td>
+    <td>{{ app["drive_title"] }}</td>
+    <td>{{ app["status"] }}</td>
+    <td>{{ app["applied_on"] }}</td>
+</tr>
+{% endfor %}
+</table>
+{% else %}
+<p>No applications found.</p>
+{% endif %}
+
+<br>
+<a href="/admin_dashboard">Back</a>
+
+</body>
+</html>

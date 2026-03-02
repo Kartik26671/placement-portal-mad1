@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, session, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
+import os
 from datetime import datetime
 
 app = Flask(__name__)
@@ -15,61 +16,65 @@ def get_db_connection():
 
 @app.route("/init_db")
 def init_db():
-    conn = get_db_connection()
-    cursor = conn.cursor()
+   conn = get_db_connection()
+   cursor = conn.cursor()
 
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL,
-        role TEXT NOT NULL,
-        is_active INTEGER DEFAULT 1
-    )
-    """)
+   cursor.execute("""
+   CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      email TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL,
+      role TEXT NOT NULL,
+      is_active INTEGER DEFAULT 1
+   )
+   """)
 
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS company_profiles (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER,
-        company_name TEXT,
-        hr_contact TEXT,
-        website TEXT,
-        approval_status TEXT DEFAULT 'pending',
-        FOREIGN KEY(user_id) REFERENCES users(id)
-    )
-    """)
+   cursor.execute("""
+   CREATE TABLE IF NOT EXISTS company_profiles (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      company_name TEXT,
+      hr_contact TEXT,
+      website TEXT,
+      approval_status TEXT DEFAULT 'pending',
+      FOREIGN KEY(user_id) REFERENCES users(id)
+   )
+   """)
 
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS drives (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        company_id INTEGER,
-        title TEXT,
-        description TEXT,
-        eligibility TEXT,
-        deadline TEXT,
-        status TEXT DEFAULT 'pending',
-        FOREIGN KEY(company_id) REFERENCES company_profiles(id)
-    )
-    """)
+   cursor.execute("""
+   CREATE TABLE IF NOT EXISTS drives (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      company_id INTEGER,
+      title TEXT,
+      description TEXT,
+      eligibility TEXT,
+      deadline TEXT,
+      status TEXT DEFAULT 'pending',
+      FOREIGN KEY(company_id) REFERENCES company_profiles(id)
+   )
+   """)
 
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS applications (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        student_id INTEGER,
-        drive_id INTEGER,
-        status TEXT DEFAULT 'Applied',
-        applied_on TEXT,
-        UNIQUE(student_id, drive_id),
-        FOREIGN KEY(student_id) REFERENCES users(id),
-        FOREIGN KEY(drive_id) REFERENCES drives(id)
-    )
-    """)
+   cursor.execute("""
+   CREATE TABLE IF NOT EXISTS applications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      student_id INTEGER,
+      drive_id INTEGER,
+      status TEXT DEFAULT 'Applied',
+      applied_on TEXT,
+      UNIQUE(student_id, drive_id),
+      FOREIGN KEY(student_id) REFERENCES users(id),
+      FOREIGN KEY(drive_id) REFERENCES drives(id)
+   )
+   """)
+   try:
+      cursor.execute("ALTER TABLE users ADD COLUMN resume_path TEXT")
+   except:
+      pass
 
-    conn.commit()
-    conn.close()
-    return "Database Created"
+   conn.commit()
+   conn.close()
+   return "Database Created"
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -105,42 +110,56 @@ def register():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-   if request.method == "POST":
-      email = request.form["email"]
-      password = request.form["password"]
 
-      conn = get_db_connection()
-      user = conn.execute(
-         "SELECT * FROM users WHERE email = ?",
-         (email,)
-      ).fetchone()
-      conn.close()
+    # Clear any previous session (prevents role leakage)
+    session.clear()
 
-      # User does not exist
-      if not user:
-         return "Invalid credentials"
+    if request.method == "POST":
 
-      # Wrong password
-      if not check_password_hash(user["password"], password):
-         return "Invalid credentials"
+        email = request.form.get("email", "").strip()
+        password = request.form.get("password", "").strip()
 
-      # Deactivated account
-      if user["is_active"] == 0:
-         return "Account is deactivated by admin"
+        if not email or not password:
+            return "Please enter email and password"
 
-      # Login successful
-      session["user_id"] = user["id"]
-      session["role"] = user["role"]
+        conn = get_db_connection()
+        user = conn.execute(
+            "SELECT * FROM users WHERE email = ?",
+            (email,)
+        ).fetchone()
+        conn.close()
 
-      if user["role"] == "admin":
-         return redirect("/admin_dashboard")
-      elif user["role"] == "company":
-         return redirect("/company_dashboard")
-      else:
-         return redirect("/student_dashboard")
+        # User not found
+        if user is None:
+            return "Invalid credentials"
 
-   return render_template("login.html")
+        # Incorrect password
+        if not check_password_hash(user["password"], password):
+            return "Invalid credentials"
 
+        # Account deactivated
+        if user["is_active"] == 0:
+            return "Account is deactivated by admin"
+
+        # Successful login
+        session["user_id"] = user["id"]
+        session["role"] = user["role"]
+
+        # Explicit role-based routing
+        if user["role"] == "admin":
+            return redirect("/admin_dashboard")
+
+        if user["role"] == "company":
+            return redirect("/company_dashboard")
+
+        if user["role"] == "student":
+            return redirect("/student_dashboard")
+
+        # Fallback safety (should never happen)
+        session.clear()
+        return "Invalid role assigned"
+
+    return render_template("login.html")
 
 
 @app.route("/admin_dashboard")
@@ -208,19 +227,87 @@ def admin_dashboard():
 
 
 @app.route("/admin_view_students")
-def admin_view_students():
+def admin_all_students():
+    if "user_id" not in session or session.get("role") != "admin":
+        return redirect("/login")
+
+    search = request.args.get("search", "").strip()
+
+    conn = get_db_connection()
+
+    if search:
+        students = conn.execute("""
+            SELECT * FROM users
+            WHERE role='student'
+            AND (name LIKE ? OR CAST(id AS TEXT) LIKE ?)
+        """, (f"%{search}%", f"%{search}%")).fetchall()
+    else:
+        students = conn.execute("""
+            SELECT * FROM users WHERE role='student'
+        """).fetchall()
+
+    conn.close()
+
+    return render_template(
+        "admin_students.html",
+        students=students,
+        search=search
+    )
+
+
+
+
+@app.route("/admin_view_drives")
+def admin_view_drives():
     if "user_id" not in session or session.get("role") != "admin":
         return redirect("/login")
 
     conn = get_db_connection()
-    students = conn.execute(
-        "SELECT * FROM users WHERE role='student'"
-    ).fetchall()
+
+    drives = conn.execute("""
+        SELECT 
+            drives.id,
+            drives.title,
+            drives.status,
+            drives.deadline,
+            users.name AS company_name
+        FROM drives
+        JOIN company_profiles ON drives.company_id = company_profiles.id
+        JOIN users ON company_profiles.user_id = users.id
+    """).fetchall()
+
     conn.close()
 
-    return render_template("admin_students.html", students=students)
+    return render_template("admin_view_drives.html", drives=drives)
 
 
+    
+
+@app.route("/admin_students")
+def admin_students():
+   if "user_id" not in session or session.get("role") != "admin":
+      return redirect("/login")
+
+   search = request.args.get("search", "").strip()
+
+   conn = get_db_connection()
+
+   if search:
+      students = conn.execute("""
+         SELECT * FROM users
+         WHERE role='student'
+         AND (name LIKE ? OR CAST(id AS TEXT) LIKE ?)
+      """, (f"%{search}%", f"%{search}%")).fetchall()
+   else:
+      students = conn.execute("""
+         SELECT * FROM users WHERE role='student'
+      """).fetchall()
+
+   conn.close()
+
+   return render_template("admin_students.html", 
+                        students=students, 
+                        search=search)
 
 
 @app.route("/admin_toggle_student/<int:student_id>")
@@ -252,46 +339,95 @@ def admin_toggle_student(student_id):
 
 @app.route("/admin_toggle_company/<int:company_id>")
 def admin_toggle_company(company_id):
-    if "user_id" not in session or session.get("role") != "admin":
-        return redirect("/login")
+   if "user_id" not in session or session.get("role") != "admin":
+      return redirect("/login")
 
-    conn = get_db_connection()
+   conn = get_db_connection()
 
-    company = conn.execute(
-        "SELECT is_active FROM users WHERE id=? AND role='company'",
-        (company_id,)
-    ).fetchone()
+   company = conn.execute(
+      "SELECT is_active FROM users WHERE id=? AND role='company'",
+      (company_id,)
+   ).fetchone()
 
-    if company:
-        new_status = 0 if company["is_active"] == 1 else 1
+   if company:
+      new_status = 0 if company["is_active"] == 1 else 1
+      conn.execute(
+         "UPDATE users SET is_active=? WHERE id=?",
+         (new_status, company_id)
+      )
+      conn.commit()
 
-        conn.execute(
-            "UPDATE users SET is_active=? WHERE id=?",
-            (new_status, company_id)
-        )
-        conn.commit()
-
-    conn.close()
-    return redirect("/admin_view_companies")
-
-
+   conn.close()
+   return redirect("/admin_view_companies")
 
 
 
 
 @app.route("/admin_view_companies")
 def admin_view_companies():
-   if "user_id" not in session or session.get("role") != "admin":
-      return redirect("/login")
+    if "user_id" not in session or session.get("role") != "admin":
+        return redirect("/login")
 
-   conn = get_db_connection()
-   companies = conn.execute(
-      "SELECT * FROM users WHERE role='company'"
-   ).fetchall()
-   conn.close()
+    search = request.args.get("search", "").strip()
 
-   return render_template("admin_companies.html", companies=companies)
+    conn = get_db_connection()
 
+    if search:
+        companies = conn.execute("""
+            SELECT users.id, users.name, users.email, users.is_active,
+                   company_profiles.approval_status
+            FROM users
+            JOIN company_profiles ON users.id = company_profiles.user_id
+            WHERE users.role = 'company'
+            AND users.name LIKE ?
+        """, (f"%{search}%",)).fetchall()
+    else:
+        companies = conn.execute("""
+            SELECT users.id, users.name, users.email, users.is_active,
+                   company_profiles.approval_status
+            FROM users
+            JOIN company_profiles ON users.id = company_profiles.user_id
+            WHERE users.role = 'company'
+        """).fetchall()
+
+    conn.close()
+
+    return render_template(
+        "admin_companies.html",
+        companies=companies,
+        search=search
+    )
+
+
+
+
+
+
+@app.route("/admin_all_applications")
+def admin_all_applications():
+    if "user_id" not in session or session.get("role") != "admin":
+        return redirect("/login")
+
+    conn = get_db_connection()
+
+    applications = conn.execute("""
+        SELECT 
+            users.name AS student_name,
+            company_users.name AS company_name,
+            drives.title AS drive_title,
+            applications.status,
+            applications.applied_on
+        FROM applications
+        JOIN users ON applications.student_id = users.id
+        JOIN drives ON applications.drive_id = drives.id
+        JOIN company_profiles ON drives.company_id = company_profiles.id
+        JOIN users AS company_users ON company_profiles.user_id = company_users.id
+    """).fetchall()
+
+    conn.close()
+
+    return render_template("admin_all_applications.html", 
+                           applications=applications)
 
 
 
@@ -314,6 +450,93 @@ def approve_company(user_id):
    conn.close()
 
    return redirect("/admin_dashboard")
+
+
+
+@app.route("/admin_reject_company/<int:company_id>")
+def admin_reject_company(company_id):
+    if "user_id" not in session or session.get("role") != "admin":
+        return redirect("/login")
+
+    conn = get_db_connection()
+
+    conn.execute("""
+        UPDATE company_profiles
+        SET approval_status = 'rejected'
+        WHERE user_id = ?
+    """, (company_id,))
+
+    conn.commit()
+    conn.close()
+
+    return redirect("/admin_view_companies")
+
+
+
+
+@app.route("/admin_reject_drive/<int:drive_id>")
+def admin_reject_drive(drive_id):
+    if "user_id" not in session or session.get("role") != "admin":
+        return redirect("/login")
+
+    conn = get_db_connection()
+
+    conn.execute("""
+        UPDATE drives
+        SET status = 'rejected'
+        WHERE id = ?
+    """, (drive_id,))
+
+    conn.commit()
+    conn.close()
+
+    return redirect("/admin_view_drives")
+
+
+
+
+
+@app.route("/edit_drive/<int:drive_id>", methods=["GET", "POST"])
+def edit_drive(drive_id):
+    if "user_id" not in session or session.get("role") != "company":
+        return redirect("/login")
+
+    conn = get_db_connection()
+
+    drive = conn.execute("""
+      SELECT d.*
+      FROM drives d
+      JOIN company_profiles cp ON d.company_id = cp.id
+      WHERE d.id = ? AND cp.user_id = ?
+   """, (drive_id, session["user_id"])).fetchone()
+
+    if not drive:
+        conn.close()
+        return "Drive not found or unauthorized access"
+
+    if drive["status"] == "closed":
+        conn.close()
+        return "Cannot edit a closed drive"
+
+    if request.method == "POST":
+        title = request.form["title"]
+        description = request.form["description"]
+        deadline = request.form["deadline"]
+
+        conn.execute("""
+            UPDATE drives
+            SET title = ?, description = ?, deadline = ?, status = 'pending'
+            WHERE id = ?
+        """, (title, description, deadline, drive_id))
+
+        conn.commit()
+        conn.close()
+
+        return redirect("/company_dashboard")
+
+    conn.close()
+    return render_template("edit_drive.html", drive=drive)
+
 
 
 
@@ -566,6 +789,52 @@ def student_dashboard():
 
 
 
+
+
+
+@app.route("/student_profile", methods=["GET", "POST"])
+def student_profile():
+   if "user_id" not in session or session.get("role") != "student":
+      return redirect("/login")
+
+   conn = get_db_connection()
+
+   if request.method == "POST":
+      name = request.form["name"]
+
+      file = request.files.get("resume")
+
+      resume_path = None
+
+      if file and file.filename != "":
+         filename = f"resume_{session['user_id']}.pdf"
+         save_path = os.path.join("static", filename)
+         file.save(save_path)
+         resume_path = save_path
+
+         conn.execute(
+               "UPDATE users SET name=?, resume_path=? WHERE id=?",
+               (name, resume_path, session["user_id"])
+         )
+      else:
+         conn.execute(
+               "UPDATE users SET name=? WHERE id=?",
+               (name, session["user_id"])
+         )
+
+      conn.commit()
+
+   student = conn.execute(
+      "SELECT * FROM users WHERE id=?",
+      (session["user_id"],)
+   ).fetchone()
+
+   conn.close()
+
+   return render_template("student_profile.html", student=student)
+
+
+
 @app.route("/apply_drive/<int:drive_id>")
 def apply_drive(drive_id):
 
@@ -605,4 +874,5 @@ def home():
     return "Placement Portal Running"
 
 if __name__ == "__main__":
-    app.run(debug=True)
+   init_db()
+   app.run(debug=True)

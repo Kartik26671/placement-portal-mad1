@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Drive</title>
+</head>
+<body>
+
+<h2>Edit Drive</h2>
+
+<form method="POST">
+
+    <label>Job Title:</label><br>
+    <input type="text" name="title" value="{{ drive['title'] }}" required><br><br>
+
+    <label>Description:</label><br>
+    <textarea name="description" required>{{ drive['description'] }}</textarea><br><br>
+
+    <label>Deadline:</label><br>
+    <input type="date" name="deadline" value="{{ drive['deadline'] }}" required><br><br>
+
+    <button type="submit">Update Drive</button>
+</form>
+
+<br>
+<a href="/company_dashboard">Back</a>
+
+</body>
+</html>

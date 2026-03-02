@@ -35,6 +35,11 @@
       {% else %}
             Closed
       {% endif %}
+      <td>
+         {% if drive["status"] != "closed" %}
+            <a href="/edit_drive/{{ drive['id'] }}">Edit</a>
+         {% endif %}
+      </td>
    </td>
    </tr>
    {% endfor %}

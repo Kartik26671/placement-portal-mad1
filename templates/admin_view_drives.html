@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin - All Drives</title>
+</head>
+<body>
+
+<h2>All Placement Drives</h2>
+
+{% if drives %}
+<table border="1">
+<tr>
+    <th>ID</th>
+    <th>Title</th>
+    <th>Company</th>
+    <th>Status</th>
+    <th>Deadline</th>
+</tr>
+
+{% for drive in drives %}
+<tr>
+    <td>{{ drive["id"] }}</td>
+    <td>{{ drive["title"] }}</td>
+    <td>{{ drive["company_name"] }}</td>
+    <td>{{ drive["status"] }}</td>
+    <td>{{ drive["deadline"] }}</td>
+</tr>
+{% endfor %}
+</table>
+{% else %}
+<p>No drives found.</p>
+{% endif %}
+{% if drive["status"] == "pending" %}
+    <a href="/admin_approve_drive/{{ drive['id'] }}">Approve</a>
+    <a href="/admin_reject_drive/{{ drive['id'] }}">Reject</a>
+{% endif %}
+
+<br>
+<a href="/admin_dashboard">Back</a>
+
+</body>
+</html>

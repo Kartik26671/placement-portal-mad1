@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Profile</title>
+</head>
+<body>
+
+<h2>Update Profile</h2>
+
+<form method="POST" enctype="multipart/form-data">
+
+    <label>Name:</label>
+    <input type="text" name="name" value="{{ student['name'] }}" required>
+    <br><br>
+
+    <label>Upload Resume (PDF only):</label>
+    <input type="file" name="resume" accept=".pdf">
+    <br><br>
+
+    <button type="submit">Update Profile</button>
+
+</form>
+
+<br>
+
+{% if student["resume_path"] %}
+<p>Current Resume:
+    <a href="/{{ student['resume_path'] }}" target="_blank">
+        View Resume
+    </a>
+</p>
+{% endif %}
+
+<br>
+<a href="/student_dashboard">Back</a>
+
+</body>
+</html>
