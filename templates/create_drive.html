@@ -1,20 +1,67 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Create Drive</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-<h2>Create Placement Drive</h2>
+{% block title %}Edit Drive{% endblock %}
 
-<form method="POST">
-   Job Title: <input type="text" name="title" required><br><br>
-   Description: <input type="text" name="description" required><br><br>
-   Eligibility: <input type="text" name="eligibility" required><br><br>
-   Deadline: <input type="date" name="deadline" required><br><br>
+{% block content %}
 
-   <button type="submit">Create Drive</button>
-</form>
+<div class="row justify-content-center">
+    <div class="col-md-8">
 
-</body>
-</html>
+        <div class="card p-5">
+
+            <h3 class="mb-4 fw-bold">Edit Placement Drive</h3>
+
+            <form method="POST">
+
+                <div class="mb-3">
+                    <label class="form-label">Job Title</label>
+                    <input type="text"
+                           name="title"
+                           value="{{ drive.title }}"
+                           class="form-control"
+                           required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea name="description"
+                              class="form-control"
+                              rows="4"
+                              required>{{ drive.description }}</textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Eligibility</label>
+                    <input type="text"
+                           name="eligibility"
+                           value="{{ drive.eligibility }}"
+                           class="form-control"
+                           required>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Application Deadline</label>
+                    <input type="date"
+                           name="deadline"
+                           value="{{ drive.deadline }}"
+                           class="form-control"
+                           required>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="/company_dashboard" class="btn btn-outline-secondary">
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn btn-warning">
+                        Update Drive
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

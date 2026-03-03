@@ -1,67 +1,97 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Admin - Companies</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-<h2>All Companies</h2>
+{% block title %}Manage Companies{% endblock %}
 
-<form method="GET">
-    <input type="text" name="search" placeholder="Search by company name" value="{{ search }}">
-    <button type="submit">Search</button>
-</form>
+{% block content %}
 
-<br>
+<h2 class="mb-4 fw-bold">Manage Companies</h2>
 
-{% if companies %}
-<table border="1">
-<tr>
-    <th>ID</th>
-    <th>Name</th>
-    <th>Email</th>
-    <th>Approval</th>
-    <th>Status</th>
-    <th>Action</th>
-</tr>
+<div class="card p-4 mb-4">
+    <form method="GET" action="/admin_view_companies" class="row g-3">
+        <div class="col-md-10">
+            <input type="text"
+                   name="search"
+                   class="form-control"
+                   placeholder="Search by company name or email..."
+                   value="{{ request.args.get('search', '') }}">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">
+                Search
+            </button>
+        </div>
+    </form>
+</div>
 
-{% for company in companies %}
-<tr>
-    <td>{{ company["id"] }}</td>
-    <td>{{ company["name"] }}</td>
-    <td>{{ company["email"] }}</td>
-    <td>{{ company["approval_status"] }}</td>
+<div class="card p-4">
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Company</th>
+                    <th>Email</th>
+                    <th>Approval</th>
+                    <th>Account</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for company in companies %}
+                <tr>
+                    <td>{{ company.id }}</td>
+                    <td>{{ company.name }}</td>
+                    <td>{{ company.email }}</td>
 
-    <td>
-        {% if company["is_active"] == 1 %}
-            Active
-        {% else %}
-            Deactivated
-        {% endif %}
-    </td>
+                    <td>
+                        {% if company.approval_status == "approved" %}
+                            <span class="badge bg-success">Approved</span>
+                        {% elif company.approval_status == "rejected" %}
+                            <span class="badge bg-danger">Rejected</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">Pending</span>
+                        {% endif %}
+                    </td>
 
-    <td>
-        {% if company["is_active"] == 1 %}
-            <a href="/admin_toggle_company/{{ company['id'] }}">Deactivate</a>
-        {% else %}
-        
-            <a href="/admin_toggle_company/{{ company['id'] }}">Activate</a>
-        {% endif %}
+                    <td>
+                        {% if company.is_active == 1 %}
+                            <span class="badge bg-success">Active</span>
+                        {% else %}
+                            <span class="badge bg-danger">Deactivated</span>
+                        {% endif %}
+                    </td>
 
-        {% if company["approval_status"] == "pending" %}
-            <a href="/admin_approve_company/{{ company['id'] }}">Approve</a>
-            <a href="/admin_reject_company/{{ company['id'] }}">Reject</a>
-        {% endif %}
-    </td>
-</tr>
-{% endfor %}
-</table>
-{% else %}
-<p>No companies found.</p>
-{% endif %}
+                    <td class="text-center">
 
-<br>
-<a href="/admin_dashboard">Back</a>
+                        {% if company.approval_status == "pending" %}
+                            <a href="/admin_approve_company/{{ company.id }}"
+                               class="btn btn-sm btn-outline-success">
+                                Approve
+                            </a>
+                            <a href="/admin_reject_company/{{ company.id }}"
+                               class="btn btn-sm btn-outline-danger">
+                                Reject
+                            </a>
+                        {% endif %}
 
-</body>
-</html>
+                        {% if company.is_active == 1 %}
+                            <a href="/admin_deactivate_company/{{ company.id }}"
+                               class="btn btn-sm btn-outline-danger">
+                                Deactivate
+                            </a>
+                        {% else %}
+                            <a href="/admin_activate_company/{{ company.id }}"
+                               class="btn btn-sm btn-outline-success">
+                                Activate
+                            </a>
+                        {% endif %}
+
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

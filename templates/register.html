@@ -1,22 +1,72 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Register</title>
-</head>
-<body>
-    <h2>Register</h2>
-    <form method="POST">
-        Name: <input type="text" name="name" required><br><br>
-        Email: <input type="email" name="email" required><br><br>
-        Password: <input type="password" name="password" required><br><br>
+{% extends "base.html" %}
 
-        Role:
-        <select name="role">
-            <option value="student">Student</option>
-            <option value="company">Company</option>
-        </select><br><br>
+{% block title %}Register{% endblock %}
 
-        <button type="submit">Register</button>
-    </form>
-</body>
-</html>
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+
+        <div class="card p-5">
+
+            <h3 class="text-center mb-4 fw-bold">Register</h3>
+
+            <form method="POST">
+
+                <div class="mb-3">
+                    <label class="form-label">Name</label>
+                    <input type="text"
+                           name="name"
+                           class="form-control"
+                           required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input type="email"
+                           name="email"
+                           class="form-control"
+                           required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Password</label>
+                    <input type="password"
+                           name="password"
+                           class="form-control"
+                           required>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Register As</label>
+                    <select name="role"
+                            class="form-select"
+                            required>
+                        <option value="">Select Role</option>
+                        <option value="student">Student</option>
+                        <option value="company">Company</option>
+                    </select>
+                </div>
+
+                <button type="submit"
+                        class="btn btn-success w-100">
+                    Register
+                </button>
+
+            </form>
+
+            <hr class="my-4">
+
+            <div class="text-center">
+                <small>
+                    Already have an account?
+                    <a href="/login">Login</a>
+                </small>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

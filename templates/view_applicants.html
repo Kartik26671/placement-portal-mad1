@@ -1,39 +1,95 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Applicants</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-<h2>Applicants</h2>
+{% block title %}View Applicants{% endblock %}
+
+{% block content %}
+
+<h2 class="mb-4 fw-bold">Applicants</h2>
 
 {% if applicants %}
-<table border="1">
-    <tr>
-        <th>Student Name</th>
-        <th>Drive</th>
-        <th>Status</th>
-        <th>Update</th>
-    </tr>
 
-    {% for app in applicants %}
-    <tr>
-        <td>{{ app["name"] }}</td>
-        <td>{{ app["title"] }}</td>
-        <td>{{ app["status"] }}</td>
-        <td>
-            <a href="/update_status/{{ app['id'] }}/Shortlisted">Shortlist</a>
-            |
-            <a href="/update_status/{{ app['id'] }}/Selected">Select</a>
-            |
-            <a href="/update_status/{{ app['id'] }}/Rejected">Reject</a>
-        </td>
-    </tr>
-    {% endfor %}
-</table>
+<div class="card p-4">
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Email</th>
+                    <th>Resume</th>
+                    <th>Status</th>
+                    <th class="text-center">Update Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for applicant in applicants %}
+                <tr>
+                    <td>{{ applicant.name }}</td>
+                    <td>{{ applicant.email }}</td>
+
+                    <!-- Resume -->
+                    <td>
+                        {% if applicant.resume_path %}
+                            <a href="{{ url_for('static', filename=applicant.resume_path) }}"
+                               target="_blank"
+                               class="btn btn-sm btn-outline-primary">
+                                View Resume
+                            </a>
+                        {% else %}
+                            <span class="text-muted">Not Uploaded</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Current Status -->
+                    <td>
+                        {% if applicant.status == "Applied" %}
+                            <span class="badge bg-primary">Applied</span>
+                        {% elif applicant.status == "Shortlisted" %}
+                            <span class="badge bg-success">Shortlisted</span>
+                        {% elif applicant.status == "Rejected" %}
+                            <span class="badge bg-danger">Rejected</span>
+                        {% elif applicant.status == "Selected" %}
+                            <span class="badge bg-success">Selected</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ applicant.status }}</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Status Update -->
+                    <td class="text-center">
+                        <form method="POST"
+                              action="/update_application_status/{{ applicant.application_id }}"
+                              class="d-flex justify-content-center gap-2">
+
+                            <select name="status"
+                                    class="form-select form-select-sm w-auto"
+                                    required>
+                                <option value="Applied">Applied</option>
+                                <option value="Shortlisted">Shortlisted</option>
+                                <option value="Rejected">Rejected</option>
+                                <option value="Selected">Selected</option>
+                            </select>
+
+                            <button type="submit"
+                                    class="btn btn-sm btn-outline-success">
+                                Update
+                            </button>
+
+                        </form>
+                    </td>
+
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
 {% else %}
-<p>No applicants yet.</p>
+<p class="text-muted">No applicants for this drive.</p>
 {% endif %}
 
-</body>
-</html>
+<a href="/company_dashboard" class="btn btn-outline-secondary mt-4">
+    Back to Dashboard
+</a>
+
+{% endblock %}

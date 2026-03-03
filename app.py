@@ -259,31 +259,49 @@ def admin_all_students():
 
 @app.route("/admin_view_drives")
 def admin_view_drives():
-    if "user_id" not in session or session.get("role") != "admin":
-        return redirect("/login")
+   if "user_id" not in session or session.get("role") != "admin":
+      return redirect("/login")
 
-    conn = get_db_connection()
+   search = request.args.get("search", "").strip()
 
-    drives = conn.execute("""
-        SELECT 
-            drives.id,
-            drives.title,
-            drives.status,
-            drives.deadline,
-            users.name AS company_name
-        FROM drives
-        JOIN company_profiles ON drives.company_id = company_profiles.id
-        JOIN users ON company_profiles.user_id = users.id
-    """).fetchall()
+   conn = get_db_connection()
 
-    conn.close()
+   if search:
+      drives = conn.execute("""
+         SELECT drives.id,
+                  drives.title,
+                  drives.status,
+                  drives.deadline,
+                  users.name AS company_name
+         FROM drives
+         JOIN company_profiles ON drives.company_id = company_profiles.id
+         JOIN users ON company_profiles.user_id = users.id
+         WHERE drives.title LIKE ?
+            OR users.name LIKE ?
+      """, (f"%{search}%", f"%{search}%")).fetchall()
+   else:
+      drives = conn.execute("""
+         SELECT drives.id,
+                  drives.title,
+                  drives.status,
+                  drives.deadline,
+                  users.name AS company_name
+         FROM drives
+         JOIN company_profiles ON drives.company_id = company_profiles.id
+         JOIN users ON company_profiles.user_id = users.id
+      """).fetchall()
 
-    return render_template("admin_view_drives.html", drives=drives)
+   conn.close()
+
+   return render_template(
+      "admin_view_drives.html",
+      drives=drives
+   )
 
 
     
 
-@app.route("/admin_students")
+@app.route("/admin_view_students")
 def admin_students():
    if "user_id" not in session or session.get("role") != "admin":
       return redirect("/login")
@@ -296,8 +314,12 @@ def admin_students():
       students = conn.execute("""
          SELECT * FROM users
          WHERE role='student'
-         AND (name LIKE ? OR CAST(id AS TEXT) LIKE ?)
-      """, (f"%{search}%", f"%{search}%")).fetchall()
+         AND (
+            name LIKE ?
+            OR email LIKE ?
+            OR CAST(id AS TEXT) LIKE ?
+         )
+      """, (f"%{search}%", f"%{search}%", f"%{search}%")).fetchall()
    else:
       students = conn.execute("""
          SELECT * FROM users WHERE role='student'
@@ -630,31 +652,44 @@ def create_drive():
 
 
 
-@app.route("/view_applicants")
-def view_applicants():
+@app.route("/view_applicants/<int:drive_id>")
+def view_applicants(drive_id):
 
    if "user_id" not in session or session.get("role") != "company":
       return "Unauthorized Access"
 
    conn = get_db_connection()
 
-   # Get company profile id
+   # Verify this drive belongs to logged-in company
    company = conn.execute("""
       SELECT id FROM company_profiles
       WHERE user_id = ?
    """, (session["user_id"],)).fetchone()
 
-   # Get applicants
+   drive = conn.execute("""
+      SELECT * FROM drives
+      WHERE id = ? AND company_id = ?
+   """, (drive_id, company["id"])).fetchone()
+
+   if not drive:
+      conn.close()
+      return "Drive not found or unauthorized access"
+
    applicants = conn.execute("""
-      SELECT applications.id,
+      SELECT applications.id AS application_id,
+            applications.status,
             users.name,
-            drives.title,
-            applications.status
+            users.email,
+            users.resume_path
       FROM applications
       JOIN users ON applications.student_id = users.id
-      JOIN drives ON applications.drive_id = drives.id
-      WHERE drives.company_id = ?
-   """, (company["id"],)).fetchall()
+      WHERE applications.drive_id = ?
+   """, (drive_id,)).fetchall()
+
+   conn.close()
+
+   return render_template("view_applicants.html",
+                        applicants=applicants)
 
    conn.close()
 

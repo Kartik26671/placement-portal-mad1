@@ -1,55 +1,109 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Company Dashboard</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-<h2>Company Dashboard</h2>
+{% block title %}Company Dashboard{% endblock %}
 
-<h3>Company Name: {{ company["name"] }}</h3>
-<p>Status: {{ company["approval_status"] }}</p>
+{% block content %}
 
-<a href="/create_drive">Create New Drive</a>
-<br><br>
+<h2 class="mb-4 fw-bold">Company Dashboard</h2>
 
-<h3>Your Drives</h3>
+<!-- COMPANY INFO CARD -->
+<div class="card p-4 mb-4">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h4 class="fw-bold mb-1">{{ company.name }}</h4>
 
-{% if drives %}
-<table border="1">
-   <tr>
-      <th>Job Title</th>
-      <th>Status</th>
-      <th>Applicants</th>
-      <th>Action</th>
-   </tr>
+            {% if company.approval_status == "approved" %}
+                <span class="badge bg-success">Approved</span>
+            {% elif company.approval_status == "pending" %}
+                <span class="badge bg-warning text-dark">Pending Approval</span>
+            {% else %}
+                <span class="badge bg-danger">Rejected</span>
+            {% endif %}
+        </div>
 
-   {% for drive in drives %}
-   <tr>
-   <td>{{ drive["title"] }}</td>
-   <td>{{ drive["status"] }}</td>
-   <td>{{ drive["applicant_count"] }}</td>
-   <td>
-      {% if drive["status"] != "closed" %}
-            <a href="/close_drive/{{ drive['id'] }}">Close</a>
-      {% else %}
-            Closed
-      {% endif %}
-      <td>
-         {% if drive["status"] != "closed" %}
-            <a href="/edit_drive/{{ drive['id'] }}">Edit</a>
-         {% endif %}
-      </td>
-   </td>
-   </tr>
-   {% endfor %}
-</table>
-{% else %}
-<p>No drives created yet.</p>
-{% endif %}
+        <div class="col-md-4 text-end">
+            {% if company.approval_status == "approved" %}
+                <a href="/create_drive" class="btn btn-primary">
+                    + Create New Drive
+                </a>
+            {% else %}
+                <button class="btn btn-secondary" disabled>
+                    Waiting for Approval
+                </button>
+            {% endif %}
+        </div>
+    </div>
+</div>
 
-<br>
-<a href="/view_applicants">View Applicants</a>
+<!-- DRIVES TABLE -->
+<div class="card p-4">
+    <h5 class="mb-3">Your Placement Drives</h5>
 
-</body>
-</html>
+    {% if drives %}
+        <div class="table-responsive">
+            <table class="table table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>Drive Title</th>
+                        <th>Status</th>
+                        <th>Applicants</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for drive in drives %}
+                    <tr>
+                        <td>{{ drive.title }}</td>
+
+                        <td>
+                            {% if drive.status == "approved" %}
+                                <span class="badge bg-success">Approved</span>
+                            {% elif drive.status == "pending" %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            {% elif drive.status == "rejected" %}
+                                <span class="badge bg-danger">Rejected</span>
+                            {% elif drive.status == "closed" %}
+                                <span class="badge bg-secondary">Closed</span>
+                            {% else %}
+                                <span class="badge bg-dark">{{ drive.status }}</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <span class="badge bg-primary">
+                                {{ drive.applicant_count }}
+                            </span>
+                        </td>
+
+                        <td class="text-center">
+
+                            {% if drive.status != "closed" %}
+                                <a href="/company_close_drive/{{ drive.id }}"
+                                   class="btn btn-sm btn-outline-danger">
+                                    Close
+                                </a>
+                            {% endif %}
+
+                            <a href="/edit_drive/{{ drive.id }}"
+                               class="btn btn-sm btn-outline-warning">
+                                Edit
+                            </a>
+
+                            <a href="/view_applicants/{{ drive.id }}"
+                               class="btn btn-sm btn-outline-primary">
+                                View Applicants
+                            </a>
+
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-muted">No drives created yet.</p>
+    {% endif %}
+
+</div>
+
+{% endblock %}

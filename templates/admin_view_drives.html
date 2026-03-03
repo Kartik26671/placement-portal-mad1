@@ -1,42 +1,85 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Admin - All Drives</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-<h2>All Placement Drives</h2>
+{% block title %}Manage Drives{% endblock %}
 
-{% if drives %}
-<table border="1">
-<tr>
-    <th>ID</th>
-    <th>Title</th>
-    <th>Company</th>
-    <th>Status</th>
-    <th>Deadline</th>
-</tr>
+{% block content %}
 
-{% for drive in drives %}
-<tr>
-    <td>{{ drive["id"] }}</td>
-    <td>{{ drive["title"] }}</td>
-    <td>{{ drive["company_name"] }}</td>
-    <td>{{ drive["status"] }}</td>
-    <td>{{ drive["deadline"] }}</td>
-</tr>
-{% endfor %}
-</table>
-{% else %}
-<p>No drives found.</p>
-{% endif %}
-{% if drive["status"] == "pending" %}
-    <a href="/admin_approve_drive/{{ drive['id'] }}">Approve</a>
-    <a href="/admin_reject_drive/{{ drive['id'] }}">Reject</a>
-{% endif %}
+<h2 class="mb-4 fw-bold">Manage Placement Drives</h2>
 
-<br>
-<a href="/admin_dashboard">Back</a>
+<!-- SEARCH -->
+<div class="card p-4 mb-4">
+    <form method="GET" action="/admin_view_drives" class="row g-3">
+        <div class="col-md-10">
+            <input type="text"
+                   name="search"
+                   class="form-control"
+                   placeholder="Search by drive title or company..."
+                   value="{{ request.args.get('search', '') }}">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">
+                Search
+            </button>
+        </div>
+    </form>
+</div>
 
-</body>
-</html>
+<!-- DRIVES TABLE -->
+<div class="card p-4">
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Drive Title</th>
+                    <th>Company</th>
+                    <th>Deadline</th>
+                    <th>Status</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for drive in drives %}
+                <tr>
+                    <td>{{ drive.id }}</td>
+                    <td>{{ drive.title }}</td>
+                    <td>{{ drive.company_name }}</td>
+                    <td>{{ drive.deadline }}</td>
+
+                    <td>
+                        {% if drive.status == "approved" %}
+                            <span class="badge bg-success">Approved</span>
+                        {% elif drive.status == "pending" %}
+                            <span class="badge bg-warning text-dark">Pending</span>
+                        {% elif drive.status == "rejected" %}
+                            <span class="badge bg-danger">Rejected</span>
+                        {% elif drive.status == "closed" %}
+                            <span class="badge bg-secondary">Closed</span>
+                        {% else %}
+                            <span class="badge bg-dark">{{ drive.status }}</span>
+                        {% endif %}
+                    </td>
+
+                    <td class="text-center">
+
+                        {% if drive.status == "pending" %}
+                            <a href="/admin_approve_drive/{{ drive.id }}"
+                               class="btn btn-sm btn-outline-success">
+                                Approve
+                            </a>
+
+                            <a href="/admin_reject_drive/{{ drive.id }}"
+                               class="btn btn-sm btn-outline-danger">
+                                Reject
+                            </a>
+                        {% endif %}
+
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

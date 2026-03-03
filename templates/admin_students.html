@@ -1,58 +1,73 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Admin - All Students</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-<h2>All Registered Students</h2>
+{% block title %}Manage Students{% endblock %}
 
-{% if students %}
+{% block content %}
 
-<table border="1">
-    <tr>
-        <th>ID</th>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Status</th>
-        <th>Action</th>
-    </tr>
+<h2 class="mb-4 fw-bold">Manage Students</h2>
 
-    {% for s in students %}
-    <tr>
-        <td>{{ s["id"] }}</td>
-        <td>{{ s["name"] }}</td>
-        <td>{{ s["email"] }}</td>
+<!-- SEARCH BAR -->
+<div class="card p-4 mb-4">
+    <form method="GET" action="/admin_view_students" class="row g-3">
+        <div class="col-md-10">
+            <input type="text"
+                   name="search"
+                   class="form-control"
+                   placeholder="Search by name or email..."
+                   value="{{ request.args.get('search', '') }}">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">
+                Search
+            </button>
+        </div>
+    </form>
+</div>
 
-        <!-- If you don’t yet have active column,
-             temporarily show Active -->
-        <td>
-            {% if s["is_active"] == 1 %}
-                Active
-            {% else %}
-                Deactivated
-            {% endif %}
-        </td>
+<!-- STUDENT TABLE -->
+<div class="card p-4">
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th class="text-center">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                <tr>
+                    <td>{{ student.id }}</td>
+                    <td>{{ student.name }}</td>
+                    <td>{{ student.email }}</td>
+                    <td>
+                        {% if student.is_active == 1 %}
+                            <span class="badge bg-success">Active</span>
+                        {% else %}
+                            <span class="badge bg-danger">Deactivated</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if student.is_active == 1 %}
+                            <a href="/admin_deactivate_student/{{ student.id }}"
+                               class="btn btn-sm btn-outline-danger">
+                                Deactivate
+                            </a>
+                        {% else %}
+                            <a href="/admin_activate_student/{{ student.id }}"
+                               class="btn btn-sm btn-outline-success">
+                                Activate
+                            </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 
-        <td>
-            {% if s["is_active"] == 1 %}
-                <a href="/admin_toggle_student/{{ s['id'] }}">Deactivate</a>
-            {% else %}
-                <a href="/admin_toggle_student/{{ s['id'] }}">Activate</a>
-            {% endif %}
-        </td>
-
-    </tr>
-    {% endfor %}
-
-</table>
-
-{% else %}
-<p>No students found.</p>
-{% endif %}
-
-<br>
-<a href="/admin_dashboard">Back to Dashboard</a>
-
-</body>
-</html>
+{% endblock %}

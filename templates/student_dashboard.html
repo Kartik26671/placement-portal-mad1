@@ -1,57 +1,91 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Student Dashboard</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-<h2>Available Drives</h2>
+{% block title %}Student Dashboard{% endblock %}
 
-{% if approved_drives %}
-<table border="1">
-    <tr>
-        <th>Job Title</th>
-        <th>Company</th>
-        <th>Eligibility</th>
-        <th>Deadline</th>
-        <th>Action</th>
-    </tr>
+{% block content %}
 
-    {% for drive in approved_drives %}
-    <tr>
-        <td>{{ drive["title"] }}</td>
-        <td>{{ drive["name"] }}</td>
-        <td>{{ drive["eligibility"] }}</td>
-        <td>{{ drive["deadline"] }}</td>
-        <td>
-            <a href="/apply_drive/{{ drive['id'] }}">Apply</a>
-        </td>
-    </tr>
-    {% endfor %}
-</table>
-{% else %}
-<p>No drives available.</p>
-{% endif %}
+<h2 class="mb-4 fw-bold">Student Dashboard</h2>
 
-<h2>Your Applications</h2>
+<!-- AVAILABLE DRIVES -->
+<div class="card p-4 mb-4">
+    <h5 class="mb-3">Available Placement Drives</h5>
 
-{% if applications %}
-<table border="1">
-    <tr>
-        <th>Drive</th>
-        <th>Status</th>
-    </tr>
+    {% if available_drives %}
+        <div class="table-responsive">
+            <table class="table table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>Drive Title</th>
+                        <th>Deadline</th>
+                        <th>Status</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for drive in available_drives %}
+                    <tr>
+                        <td>{{ drive.title }}</td>
+                        <td>{{ drive.deadline }}</td>
 
-    {% for app in applications %}
-    <tr>
-        <td>{{ app["title"] }}</td>
-        <td>{{ app["status"] }}</td>
-    </tr>
-    {% endfor %}
-</table>
-{% else %}
-<p>You have not applied to any drives yet.</p>
-{% endif %}
+                        <td>
+                            <span class="badge bg-success">Open</span>
+                        </td>
 
-</body>
-</html>
+                        <td class="text-center">
+                            <a href="/apply_drive/{{ drive.id }}"
+                               class="btn btn-sm btn-outline-primary">
+                                Apply
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-muted">No drives available at the moment.</p>
+    {% endif %}
+</div>
+
+<!-- YOUR APPLICATIONS -->
+<div class="card p-4">
+    <h5 class="mb-3">Your Applications</h5>
+
+    {% if applications %}
+        <div class="table-responsive">
+            <table class="table table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>Drive</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for app in applications %}
+                    <tr>
+                        <td>{{ app.title }}</td>
+
+                        <td>
+                            {% if app.status == "Applied" %}
+                                <span class="badge bg-primary">Applied</span>
+                            {% elif app.status == "Shortlisted" %}
+                                <span class="badge bg-success">Shortlisted</span>
+                            {% elif app.status == "Rejected" %}
+                                <span class="badge bg-danger">Rejected</span>
+                            {% elif app.status == "Selected" %}
+                                <span class="badge bg-success">Selected</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ app.status }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-muted">You have not applied to any drives yet.</p>
+    {% endif %}
+</div>
+
+{% endblock %}
