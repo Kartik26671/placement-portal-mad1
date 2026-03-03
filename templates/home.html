@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="hero-section text-center text-white d-flex align-items-center">
+    <div class="container">
+        <h1 class="display-4 fw-bold mb-4">Next-Gen Placement Portal</h1>
+        <p class="lead mb-4">
+            Connecting Students, Companies & Opportunities Seamlessly
+        </p>
+
+        <div class="d-flex justify-content-center gap-3">
+            <a href="/login" class="btn btn-primary btn-lg px-4">Login</a>
+            <a href="/register" class="btn btn-outline-light btn-lg px-4">Register</a>
+        </div>
+    </div>
+</section>
+
+<section class="py-5 bg-light">
+    <div class="container text-center">
+        <h2 class="fw-bold mb-5">Why Choose Our Portal?</h2>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card p-4 shadow-sm rounded">
+                    <h5 class="fw-bold">For Students</h5>
+                    <p>Apply to approved drives, track status, and manage resumes.</p>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="feature-card p-4 shadow-sm rounded">
+                    <h5 class="fw-bold">For Companies</h5>
+                    <p>Create drives, shortlist candidates, and manage hiring smoothly.</p>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="feature-card p-4 shadow-sm rounded">
+                    <h5 class="fw-bold">For Admin</h5>
+                    <p>Control approvals, monitor applications, and manage system flow.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

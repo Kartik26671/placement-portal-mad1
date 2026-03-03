@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, url_for
+from flask import Flask, render_template, request, redirect, session, url_for,flash
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 import os
@@ -455,7 +455,7 @@ def admin_all_applications():
 
 
 @app.route("/approve_company/<int:user_id>")
-def approve_company(user_id):
+def admin_approve_company(user_id):
 
    if "user_id" not in session or session.get("role") != "admin":
       return "Unauthorized Access"
@@ -475,8 +475,8 @@ def approve_company(user_id):
 
 
 
-@app.route("/admin_reject_company/<int:company_id>")
-def admin_reject_company(company_id):
+@app.route("/admin_reject_company/<int:user_id>")
+def admin_reject_company(user_id):
     if "user_id" not in session or session.get("role") != "admin":
         return redirect("/login")
 
@@ -515,6 +515,99 @@ def admin_reject_drive(drive_id):
     return redirect("/admin_view_drives")
 
 
+
+
+
+@app.route("/admin_activate_student/<int:user_id>")
+def admin_activate_student(user_id):
+
+   if "user_id" not in session or session.get("role") != "admin":
+      return redirect("/login")
+
+   conn = get_db_connection()
+
+   conn.execute("""
+      UPDATE users
+      SET is_active = 1
+      WHERE id = ?
+   """, (user_id,))
+
+   conn.commit()
+   conn.close()
+
+   flash("Student activated", "success")
+   return redirect("/admin_view_students")
+
+
+
+
+@app.route("/admin_deactivate_student/<int:user_id>")
+def admin_deactivate_student(user_id):
+
+    if "user_id" not in session or session.get("role") != "admin":
+        return redirect("/login")
+
+    conn = get_db_connection()
+
+    conn.execute("""
+        UPDATE users
+        SET is_active = 0
+        WHERE id = ?
+    """, (user_id,))
+
+    conn.commit()
+    conn.close()
+
+    flash("Student deactivated", "warning")
+    return redirect("/admin_view_students")
+
+
+
+
+
+
+
+@app.route("/admin_activate_company/<int:user_id>")
+def admin_activate_company(user_id):
+    if "user_id" not in session or session.get("role") != "admin":
+        return redirect("/login")
+
+    conn = get_db_connection()
+
+    conn.execute("""
+        UPDATE users
+        SET is_active = 1
+        WHERE id = ?
+    """, (user_id,))
+
+    conn.commit()
+    conn.close()
+
+    flash("Company activated successfully", "success")
+    return redirect("/admin_view_companies")
+
+
+
+
+
+@app.route("/admin_deactivate_company/<int:user_id>")
+def admin_deactivate_company(user_id):
+    if "user_id" not in session or session.get("role") != "admin":
+        return redirect("/login")
+
+    conn = get_db_connection()
+
+    conn.execute("""
+        UPDATE users
+        SET is_active = 0
+        WHERE id = ?
+    """, (user_id,))
+
+    conn.commit()
+    conn.close()
+
+    flash("Company deactivated successfully", "warning")
+    return redirect("/admin_view_companies")
 
 
 
@@ -698,24 +791,24 @@ def view_applicants(drive_id):
 
 
 
-@app.route("/approve_drive/<int:drive_id>")
-def approve_drive(drive_id):
+@app.route("/admin_approve_drive/<int:drive_id>")
+def admin_approve_drive(drive_id):
 
-    if "user_id" not in session or session.get("role") != "admin":
-        return "Unauthorized Access"
+   if "user_id" not in session or session.get("role") != "admin":
+      return "Unauthorized Access"
 
-    conn = get_db_connection()
+   conn = get_db_connection()
 
-    conn.execute("""
-        UPDATE drives
-        SET status = 'approved'
-        WHERE id = ?
-    """, (drive_id,))
+   conn.execute("""
+      UPDATE drives
+      SET status = 'approved'
+      WHERE id = ?
+   """, (drive_id,))
 
-    conn.commit()
-    conn.close()
-
-    return redirect("/admin_dashboard")
+   conn.commit()
+   conn.close()
+   flash("Drive approved successfully", "success")
+   return redirect("/admin_dashboard")
 
 
 
@@ -906,7 +999,7 @@ def apply_drive(drive_id):
 
 @app.route("/")
 def home():
-    return "Placement Portal Running"
+    return render_template("home.html")
 
 if __name__ == "__main__":
    init_db()
