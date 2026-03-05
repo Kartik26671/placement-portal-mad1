@@ -454,29 +454,9 @@ def admin_all_applications():
 
 
 
-@app.route("/approve_company/<int:user_id>")
-def admin_approve_company(user_id):
+@app.route("/admin_approve_company/<int:company_id>")
+def admin_approve_company(company_id):
 
-   if "user_id" not in session or session.get("role") != "admin":
-      return "Unauthorized Access"
-
-   conn = get_db_connection()
-
-   conn.execute("""
-      UPDATE company_profiles
-      SET approval_status = 'approved'
-      WHERE user_id = ?
-   """, (user_id,))
-
-   conn.commit()
-   conn.close()
-
-   return redirect("/admin_dashboard")
-
-
-
-@app.route("/admin_reject_company/<int:user_id>")
-def admin_reject_company(user_id):
     if "user_id" not in session or session.get("role") != "admin":
         return redirect("/login")
 
@@ -484,12 +464,36 @@ def admin_reject_company(user_id):
 
     conn.execute("""
         UPDATE company_profiles
-        SET approval_status = 'rejected'
-        WHERE user_id = ?
+        SET approval_status='approved'
+        WHERE id=?
     """, (company_id,))
 
     conn.commit()
     conn.close()
+
+    flash("Company approved successfully", "success")
+
+    return redirect("/admin_view_companies")
+
+
+@app.route("/admin_reject_company/<int:company_id>")
+def admin_reject_company(company_id):
+
+    if "user_id" not in session or session.get("role") != "admin":
+        return redirect("/login")
+
+    conn = get_db_connection()
+
+    conn.execute("""
+        UPDATE company_profiles
+        SET approval_status='rejected'
+        WHERE id=?
+    """, (company_id,))
+
+    conn.commit()
+    conn.close()
+
+    flash("Company rejected", "danger")
 
     return redirect("/admin_view_companies")
 
@@ -852,11 +856,12 @@ def close_drive(drive_id):
 
 
 
-@app.route("/update_status/<int:app_id>/<status>")
-def update_status(app_id, status):
-
+@app.route("/update_application_status/<int:application_id>", methods=["POST"])
+def update_application_status(application_id):
     if "user_id" not in session or session.get("role") != "company":
-        return "Unauthorized Access"
+        return redirect("/login")
+
+    new_status = request.form.get("status")
 
     conn = get_db_connection()
 
@@ -864,12 +869,12 @@ def update_status(app_id, status):
         UPDATE applications
         SET status = ?
         WHERE id = ?
-    """, (status, app_id))
+    """, (new_status, application_id))
 
     conn.commit()
     conn.close()
 
-    return redirect("/view_applicants")
+    return redirect(request.referrer)
 
 
 

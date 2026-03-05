@@ -64,12 +64,16 @@
                     <td class="text-center">
 
                         {% if company.approval_status == "pending" %}
-                            <a href="/admin_approve_company/{{ company.id }}"
+                            <!-- <a href="/admin_approve_company/{{ company.id }}"
                                class="btn btn-sm btn-outline-success">
                                 Approve
+                            </a> -->
+                            <a href="{{ url_for('admin_approve_company', company_id=company.id) }}"
+                                class="btn btn-sm btn-success">
+                                Approve
                             </a>
-                            <a href="/admin_reject_company/{{ company.id }}"
-                               class="btn btn-sm btn-outline-danger">
+                            <a href="{{ url_for('admin_reject_company', company_id=company.id) }}"
+                                class="btn btn-sm btn-outline-danger">
                                 Reject
                             </a>
                         {% endif %}

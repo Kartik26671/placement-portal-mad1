@@ -1,38 +1,58 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>All Applications</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-<h2>All Student Applications</h2>
+{% block content %}
 
-{% if applications %}
-<table border="1">
-<tr>
-    <th>Student</th>
-    <th>Company</th>
-    <th>Drive</th>
-    <th>Status</th>
-    <th>Applied On</th>
-</tr>
+<div class="container py-5">
 
-{% for app in applications %}
-<tr>
-    <td>{{ app["student_name"] }}</td>
-    <td>{{ app["company_name"] }}</td>
-    <td>{{ app["drive_title"] }}</td>
-    <td>{{ app["status"] }}</td>
-    <td>{{ app["applied_on"] }}</td>
-</tr>
-{% endfor %}
-</table>
-{% else %}
-<p>No applications found.</p>
-{% endif %}
+    <h2 class="fw-bold mb-4">All Student Applications</h2>
 
-<br>
-<a href="/admin_dashboard">Back</a>
+    {% if applications %}
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Student</th>
+                            <th>Company</th>
+                            <th>Drive</th>
+                            <th>Status</th>
+                            <th>Applied On</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for app in applications %}
+                        <tr>
+                            <td>{{ app.student_name }}</td>
+                            <td>{{ app.company_name }}</td>
+                            <td>{{ app.drive_title }}</td>
+                            <td>
+                                {% if app.status == "Shortlisted" %}
+                                    <span class="badge bg-success">{{ app.status }}</span>
+                                {% elif app.status == "Rejected" %}
+                                    <span class="badge bg-danger">{{ app.status }}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ app.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ app.applied_on }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+        <div class="alert alert-info mt-3">
+            No applications found.
+        </div>
+    {% endif %}
 
-</body>
-</html>
+    <div class="mt-4">
+        <a href="/admin_dashboard" class="btn btn-outline-dark">Back to Dashboard</a>
+    </div>
+
+</div>
+
+{% endblock %}
