@@ -29,9 +29,8 @@
                     <!-- Resume -->
                     <td>
                         {% if applicant.resume_path %}
-                            <a href="{{ url_for('static', filename=applicant.resume_path) }}"
-                               target="_blank"
-                               class="btn btn-sm btn-outline-primary">
+                            <a href="{{ url_for('static', filename='resumes/' + applicant.resume_path) }}" 
+                                class="btn btn-sm btn-outline-primary">
                                 View Resume
                             </a>
                         {% else %}
